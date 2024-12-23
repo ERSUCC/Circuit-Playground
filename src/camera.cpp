@@ -24,6 +24,13 @@ void Camera::zoom(const float amount)
     }
 }
 
+void Camera::reset()
+{
+    x = 0;
+    y = 0;
+    scale = 1;
+}
+
 void Camera::transformPoint(SDL_FPoint& point) const
 {
     point.x = (point.x - x) * scale + screenWidth / 2;

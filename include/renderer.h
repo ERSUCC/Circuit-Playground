@@ -6,36 +6,39 @@
 #include <SDL.h>
 
 #include "camera.h"
+#include "gui.h"
 #include "object.h"
 
 class Renderer
 {
 
 public:
-    Renderer(const Camera* camera, const unsigned int width, const unsigned int height);
+    Renderer(const unsigned int width, const unsigned int height);
 
     int init();
     void deinit();
 
     void render();
 
-    void addGuiObject(GUIObject* object);
-    void addCircuitObject(Object* object);
-    void removeGuiObject(const GUIObject* object);
-    void removeCircuitObject(const Object* object);
+    Camera* getCamera() const;
 
-    bool interceptClick(const SDL_FPoint& point) const;
+    void addGuiObject(GUIObject* object);
+    void addCircuitObject(CircuitObject* object);
+    void removeGuiObject(GUIObject* object);
+    void removeCircuitObject(CircuitObject* object);
+
+    Object* objectAtPoint(const SDL_FPoint& point) const;
 
 private:
-    const Camera* camera;
-
     const unsigned int width;
     const unsigned int height;
+
+    Camera* camera;
 
     SDL_Window* window;
     SDL_Renderer* renderer;
 
     std::vector<GUIObject*> guiObjects;
-    std::vector<Object*> circuitObjects;
+    std::vector<CircuitObject*> circuitObjects;
 
 };

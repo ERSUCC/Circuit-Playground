@@ -2,15 +2,25 @@
 #include <iostream>
 
 #include <SDL.h>
+#include <SDL_image.h>
 
+#include "../include/gui.h"
 #include "../include/object.h"
 #include "../include/renderer.h"
+#include "../include/utils.h"
 
 int main(int argc, char** argv)
 {
     if (SDL_Init(SDL_INIT_VIDEO))
     {
         std::cout << "Failed to initialize SDL: " << SDL_GetError() << "\n";
+
+        return 1;
+    }
+
+    if (IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG)
+    {
+        std::cout << "Failed to initialize SDL_image: " << IMG_GetError() << "\n";
 
         return 1;
     }
@@ -25,8 +35,7 @@ int main(int argc, char** argv)
     const unsigned int width = mode.w;
     const unsigned int height = mode.h;
 
-    Camera* camera = new Camera(width, height);
-    Renderer* renderer = new Renderer(camera, width, height);
+    Renderer* renderer = new Renderer(width, height);
 
     if (renderer->init())
     {
@@ -35,21 +44,17 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    bool adding = false;
+    CircuitObject* newObject = nullptr;
 
-    renderer->addGuiObject(new Button(10, 10, 50, 50, [&]()
-    {
-        adding = true;
-    }));
+    ImageButton* transistorButton = new ImageButton(width / 2 - 80, height - 96, 64, 64, "../resources/images/transistor.png");
+    ImageButton* lightButton = new ImageButton(width / 2 + 16, height - 96, 64, 64, "../resources/images/light.png");
 
-    renderer->addGuiObject(new Button(10, 70, 50, 50, [&]()
-    {
-        adding = false;
-    }));
+    renderer->addGuiObject(transistorButton);
+    renderer->addGuiObject(lightButton);
 
-    renderer->addCircuitObject(new Source(0, 0));
-    renderer->addCircuitObject(new Transistor(50, 0));
-    renderer->addCircuitObject(new Transistor(50, -50));
+    renderer->addCircuitObject(new Source({ 0, 0 }));
+
+    Object* lastHover = nullptr;
 
     bool running = true;
 
@@ -73,39 +78,85 @@ int main(int argc, char** argv)
                 case SDL_MOUSEMOTION:
                     if (event.motion.state == SDL_BUTTON_MIDDLE)
                     {
-                        camera->move(-event.motion.xrel, -event.motion.yrel);
+                        renderer->getCamera()->move(-event.motion.xrel, -event.motion.yrel);
+                    }
+
+                    else
+                    {
+                        SDL_FPoint point = { (float)event.motion.x, (float) event.motion.y };
+
+                        Object* object = renderer->objectAtPoint(point);
+
+                        if (object != lastHover)
+                        {
+                            if (lastHover)
+                            {
+                                lastHover->setHover(false);
+                            }
+
+                            if (object)
+                            {
+                                object->setHover(true);
+                            }
+
+                            lastHover = object;
+                        }
+
+                        if (!object && newObject)
+                        {
+                            renderer->getCamera()->inverseTransformPoint(point);
+
+                            Utils::snapToGrid(point);
+
+                            newObject->setPosition(point);
+                        }
                     }
 
                     break;
 
                 case SDL_MOUSEWHEEL:
-                    camera->zoom(event.wheel.preciseY);
+                    renderer->getCamera()->zoom(event.wheel.preciseY);
 
                     break;
 
                 case SDL_MOUSEBUTTONDOWN:
                     if (event.button.button == SDL_BUTTON_LEFT)
                     {
-                        SDL_FPoint point = { (float)event.button.x, (float)event.button.y };
-
-                        if (!renderer->interceptClick(point) && adding)
+                        if (lastHover)
                         {
-                            camera->inverseTransformPoint(point);
-
-                            float x = (int)(point.x / 50) * 50;
-                            float y = (int)(point.y / 50) * 50;
-
-                            if (point.x < 0)
+                            if (lastHover == transistorButton)
                             {
-                                x -= 50;
-                            }
+                                SDL_FPoint point = { (float)event.button.x, (float)event.button.y };
 
-                            if (point.y < 0)
-                            {
-                                y -= 50;
-                            }
+                                renderer->getCamera()->inverseTransformPoint(point);
 
-                            renderer->addCircuitObject(new Transistor(x, y));
+                                Utils::snapToGrid(point);
+
+                                newObject = new Transistor(point);
+
+                                renderer->addCircuitObject(newObject);
+                            }
+                        }
+
+                        else if (newObject)
+                        {
+                            newObject = nullptr;
+                        }
+                    }
+
+                    break;
+
+                case SDL_KEYDOWN:
+                    if (!event.key.repeat)
+                    {
+                        if (event.key.keysym.sym == SDLK_r && newObject)
+                        {
+                            newObject->rotate();
+                        }
+
+                        else if (event.key.keysym.sym == SDLK_f)
+                        {
+                            renderer->getCamera()->reset();
                         }
                     }
 
@@ -123,6 +174,7 @@ int main(int argc, char** argv)
 
     renderer->deinit();
 
+    IMG_Quit();
     SDL_Quit();
 
     return 0;

@@ -1,75 +1,62 @@
 #pragma once
 
-#include <functional>
-
 #include <SDL.h>
 
 #include "camera.h"
+#include "utils.h"
 
 class Object
 {
 
 public:
+    virtual void init(SDL_Renderer* renderer);
+    virtual void deinit();
+
     virtual void render(SDL_Renderer* renderer, const Camera* camera) const = 0;
 
+    virtual bool inBounds(const SDL_FPoint& point) const = 0;
+
+    void setHover(const bool hover);
+
+protected:
+    bool hover = false;
+
 };
 
-class Source : public Object
+class CircuitObject : public Object
 {
 
 public:
-    Source(const float x, const float y);
+    CircuitObject(const SDL_FPoint& position);
+
+    bool inBounds(const SDL_FPoint& point) const override;
+
+    void setPosition(const SDL_FPoint& point);
+    void rotate();
+
+protected:
+    SDL_FPoint position;
+
+    int rotation = 0;
+
+};
+
+class Source : public CircuitObject
+{
+
+public:
+    Source(const SDL_FPoint& position);
 
     void render(SDL_Renderer* renderer, const Camera* camera) const override;
 
-private:
-    float x;
-    float y;
-
-    const float size = 50;
-
 };
 
-class Transistor : public Object
+class Transistor : public CircuitObject
 {
 
 public:
-    Transistor(const float x, const float y);
+    Transistor(const SDL_FPoint& position);
 
     void render(SDL_Renderer* renderer, const Camera* camera) const override;
-
-private:
-    float x;
-    float y;
-
-    const float size = 50;
-
-};
-
-class GUIObject : public Object
-{
-
-public:
-    virtual bool interceptClick(const SDL_FPoint& point) const = 0;
-
-};
-
-class Button : public GUIObject
-{
-
-public:
-    Button(const float x, const float y, const float width, const float height, const std::function<void()> click);
-
-    void render(SDL_Renderer* renderer, const Camera* camera) const override;
-
-    bool interceptClick(const SDL_FPoint& point) const override;
-
-private:
-    float x;
-    float y;
-    float width;
-    float height;
-
-    const std::function<void()> click;
 
 };

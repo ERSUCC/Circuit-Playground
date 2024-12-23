@@ -10,6 +10,7 @@ public:
 
     void move(const float dx, const float dy);
     void zoom(const float amount);
+    void reset();
 
     void transformPoint(SDL_FPoint& point) const;
     void transformRect(SDL_FRect& rect) const;
