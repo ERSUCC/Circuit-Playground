@@ -46,9 +46,11 @@ int main(int argc, char** argv)
 
     CircuitObject* newObject = nullptr;
 
-    ImageButton* transistorButton = new ImageButton(width / 2 - 80, height - 96, 64, 64, "../resources/images/transistor.png");
-    ImageButton* lightButton = new ImageButton(width / 2 + 16, height - 96, 64, 64, "../resources/images/light.png");
+    ImageButton* cursorButton = new ImageButton(width / 2 - 112, height - 96, 64, 64, "../resources/images/cursor.png");
+    ImageButton* transistorButton = new ImageButton(width / 2 - 32, height - 96, 64, 64, "../resources/images/transistor.png");
+    ImageButton* lightButton = new ImageButton(width / 2 + 48, height - 96, 64, 64, "../resources/images/light.png");
 
+    renderer->addGuiObject(cursorButton);
     renderer->addGuiObject(transistorButton);
     renderer->addGuiObject(lightButton);
 
@@ -102,7 +104,7 @@ int main(int argc, char** argv)
                             lastHover = object;
                         }
 
-                        if (!object && newObject)
+                        if (newObject)
                         {
                             renderer->getCamera()->inverseTransformPoint(point);
 
@@ -124,8 +126,20 @@ int main(int argc, char** argv)
                     {
                         if (lastHover)
                         {
-                            if (lastHover == transistorButton)
+                            if (lastHover == cursorButton && newObject)
                             {
+                                renderer->removeCircuitObject(newObject);
+
+                                newObject = nullptr;
+                            }
+
+                            else if (lastHover == transistorButton)
+                            {
+                                if (newObject)
+                                {
+                                    renderer->removeCircuitObject(newObject);
+                                }
+
                                 SDL_FPoint point = { (float)event.button.x, (float)event.button.y };
 
                                 renderer->getCamera()->inverseTransformPoint(point);
@@ -136,11 +150,31 @@ int main(int argc, char** argv)
 
                                 renderer->addCircuitObject(newObject);
                             }
+
+                            else if (lastHover == lightButton)
+                            {
+                                if (newObject)
+                                {
+                                    renderer->removeCircuitObject(newObject);
+                                }
+
+                                SDL_FPoint point = { (float)event.button.x, (float)event.button.y };
+
+                                renderer->getCamera()->inverseTransformPoint(point);
+
+                                Utils::snapToGrid(point);
+
+                                newObject = new Light(point);
+
+                                renderer->addCircuitObject(newObject);
+                            }
                         }
 
                         else if (newObject)
                         {
-                            newObject = nullptr;
+                            newObject = newObject->clone();
+
+                            renderer->addCircuitObject(newObject);
                         }
                     }
 
@@ -164,7 +198,14 @@ int main(int argc, char** argv)
             }
         }
 
-        if ((clock.now() - lastDraw).count() >= 1e9 / 60)
+        const long long delta = (clock.now() - lastDraw).count();
+
+        if (delta >= 1e9)
+        {
+            // tick simulation
+        }
+
+        if (delta >= 1e9 / 60)
         {
             lastDraw = clock.now();
 
