@@ -9,6 +9,8 @@ class Object
 {
 
 public:
+    Object(const SDL_FPoint& position);
+
     virtual void init(SDL_Renderer* renderer);
     virtual void deinit();
 
@@ -16,9 +18,14 @@ public:
 
     virtual bool inBounds(const SDL_FPoint& point) const = 0;
 
+    SDL_FPoint getPosition() const;
+    void setPosition(const SDL_FPoint& point);
+
     void setHover(const bool hover);
 
 protected:
+    SDL_FPoint position;
+
     bool hover = false;
 
 };
@@ -32,15 +39,16 @@ public:
 
     bool inBounds(const SDL_FPoint& point) const override;
 
-    void setPosition(const SDL_FPoint& point);
     void rotate();
 
     virtual CircuitObject* clone() const = 0;
 
-protected:
-    SDL_FPoint position;
+    void setNeighbor(const unsigned int index, CircuitObject* object);
 
+protected:
     unsigned int rotation;
+
+    CircuitObject* neighbors[4] = {};
 
 };
 
@@ -50,6 +58,18 @@ class Source : public CircuitObject
 public:
     Source(const SDL_FPoint& position);
     Source(const SDL_FPoint& position, const unsigned int rotation);
+
+    void render(SDL_Renderer* renderer, const Camera* camera) const override;
+
+    CircuitObject* clone() const override;
+
+};
+
+class Wire : public CircuitObject
+{
+
+public:
+    Wire(const SDL_FPoint& position);
 
     void render(SDL_Renderer* renderer, const Camera* camera) const override;
 

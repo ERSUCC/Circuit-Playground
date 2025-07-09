@@ -11,6 +11,7 @@ add_executable(circuits src/camera.cpp
                         src/object.cpp
                         src/renderer.cpp
                         src/resource.cpp
+                        src/tree.cpp
                         src/utils.cpp)
 
 target_link_directories(circuits PRIVATE deps/SDL2/lib/x64

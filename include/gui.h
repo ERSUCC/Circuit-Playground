@@ -6,7 +6,13 @@
 #include "object.h"
 #include "resource.h"
 
-class GUIObject : public Object {};
+class GUIObject : public Object
+{
+
+public:
+    GUIObject(const SDL_FPoint& position);
+
+};
 
 class Button : public GUIObject
 {
@@ -17,8 +23,6 @@ public:
     bool inBounds(const SDL_FPoint& point) const override;
 
 protected:
-    float x;
-    float y;
     float width;
     float height;
 

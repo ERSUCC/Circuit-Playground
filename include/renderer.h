@@ -8,6 +8,7 @@
 #include "camera.h"
 #include "gui.h"
 #include "object.h"
+#include "tree.h"
 
 class Renderer
 {
@@ -24,8 +25,13 @@ public:
 
     void addGuiObject(GUIObject* object);
     void addCircuitObject(CircuitObject* object);
+    void addTemporaryObject(Object* object);
+
     void removeGuiObject(GUIObject* object);
     void removeCircuitObject(CircuitObject* object);
+    void removeTemporaryObject(Object* object);
+
+    CircuitObject* findCircuitObject(const SDL_FPoint& point) const;
 
     Object* objectAtPoint(const SDL_FPoint& point) const;
 
@@ -38,7 +44,9 @@ private:
     SDL_Window* window;
     SDL_Renderer* renderer;
 
-    std::vector<GUIObject*> guiObjects;
-    std::vector<CircuitObject*> circuitObjects;
+    Tree* guiObjects;
+    Tree* circuitObjects;
+
+    std::vector<Object*> temporaryObjects;
 
 };

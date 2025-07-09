@@ -1,7 +1,11 @@
 #include "../include/renderer.h"
 
 Renderer::Renderer(const unsigned int width, const unsigned int height) :
-    width(width), height(height), camera(new Camera(width, height)) {}
+    width(width), height(height), camera(new Camera(width, height))
+{
+    guiObjects = new Tree();
+    circuitObjects = new Tree();
+}
 
 int Renderer::init()
 {
@@ -10,12 +14,16 @@ int Renderer::init()
 
 void Renderer::deinit()
 {
-    for (GUIObject* object : guiObjects)
+    TreeIterator* iterator = guiObjects->iterator();
+
+    while (Object* object = iterator->next())
     {
         object->deinit();
     }
 
-    for (CircuitObject* object : circuitObjects)
+    iterator = circuitObjects->iterator();
+
+    while (Object* object = iterator->next())
     {
         object->deinit();
     }
@@ -29,12 +37,21 @@ void Renderer::render()
     SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
     SDL_RenderClear(renderer);
 
-    for (const CircuitObject* object : circuitObjects)
+    TreeIterator* iterator = circuitObjects->iterator();
+
+    while (Object* object = iterator->next())
     {
         object->render(renderer, camera);
     }
 
-    for (const GUIObject* object : guiObjects)
+    for (Object* object : temporaryObjects)
+    {
+        object->render(renderer, camera);
+    }
+
+    iterator = guiObjects->iterator();
+
+    while (Object* object = iterator->next())
     {
         object->render(renderer, camera);
     }
@@ -51,45 +68,91 @@ void Renderer::addGuiObject(GUIObject* object)
 {
     object->init(renderer);
 
-    guiObjects.push_back(object);
+    guiObjects->add(object);
 }
 
 void Renderer::addCircuitObject(CircuitObject* object)
 {
     object->init(renderer);
 
-    circuitObjects.push_back(object);
+    if (dynamic_cast<Wire*>(object))
+    {
+        const SDL_FPoint point = object->getPosition();
+
+        if (CircuitObject* other = findCircuitObject({ point.x, point.y - Utils::gridSize }))
+        {
+            object->setNeighbor(0, other);
+            other->setNeighbor(2, object);
+        }
+
+        if (CircuitObject* other = findCircuitObject({ point.x + Utils::gridSize, point.y }))
+        {
+            object->setNeighbor(1, other);
+            other->setNeighbor(3, object);
+        }
+
+        if (CircuitObject* other = findCircuitObject({ point.x, point.y + Utils::gridSize }))
+        {
+            object->setNeighbor(2, other);
+            other->setNeighbor(0, object);
+        }
+
+        if (CircuitObject* other = findCircuitObject({ point.x - Utils::gridSize, point.y }))
+        {
+            object->setNeighbor(3, other);
+            other->setNeighbor(1, object);
+        }
+    }
+
+    circuitObjects->add(object);
+}
+
+void Renderer::addTemporaryObject(Object* object)
+{
+    object->init(renderer);
+
+    temporaryObjects.push_back(object);
 }
 
 void Renderer::removeGuiObject(GUIObject* object)
 {
-    for (unsigned int i = 0; i < guiObjects.size(); i++)
-    {
-        if (guiObjects[i] == object)
-        {
-            guiObjects.erase(guiObjects.begin() + i);
+    guiObjects->remove(object);
 
-            object->deinit();
-        }
-    }
+    object->deinit();
 }
 
 void Renderer::removeCircuitObject(CircuitObject* object)
 {
-    for (unsigned int i = 0; i < circuitObjects.size(); i++)
-    {
-        if (circuitObjects[i] == object)
-        {
-            circuitObjects.erase(circuitObjects.begin() + i);
+    circuitObjects->remove(object);
 
-            object->deinit();
+    object->deinit();
+}
+
+void Renderer::removeTemporaryObject(Object* object)
+{
+    for (unsigned int i = 0; i < temporaryObjects.size(); i++)
+    {
+        if (temporaryObjects[i] == object)
+        {
+            temporaryObjects.erase(temporaryObjects.begin() + i);
+
+            return;
         }
     }
 }
 
+CircuitObject* Renderer::findCircuitObject(const SDL_FPoint& point) const
+{
+    return dynamic_cast<CircuitObject*>(circuitObjects->find(point));
+}
+
 Object* Renderer::objectAtPoint(const SDL_FPoint& point) const
 {
-    for (GUIObject* object : guiObjects)
+    // optimize this to search by point
+
+    TreeIterator* iterator = guiObjects->iterator();
+
+    while (Object* object = iterator->next())
     {
         if (object->inBounds(point))
         {
@@ -97,7 +160,9 @@ Object* Renderer::objectAtPoint(const SDL_FPoint& point) const
         }
     }
 
-    for (CircuitObject* object : circuitObjects)
+    iterator = circuitObjects->iterator();
+
+    while (Object* object = iterator->next())
     {
         if (object->inBounds(point))
         {

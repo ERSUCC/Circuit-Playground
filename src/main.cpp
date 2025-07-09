@@ -46,17 +46,23 @@ int main(int argc, char** argv)
 
     CircuitObject* newObject = nullptr;
 
-    ImageButton* cursorButton = new ImageButton(width / 2 - 112, height - 96, 64, 64, "../resources/images/cursor.png");
-    ImageButton* transistorButton = new ImageButton(width / 2 - 32, height - 96, 64, 64, "../resources/images/transistor.png");
-    ImageButton* lightButton = new ImageButton(width / 2 + 48, height - 96, 64, 64, "../resources/images/light.png");
+    ImageButton* cursorButton = new ImageButton(width / 2 - 152, height - 96, 64, 64, "../resources/images/cursor.png");
+    ImageButton* wireButton = new ImageButton(width / 2 - 72, height - 96, 64, 64, "../resources/images/wire.png");
+    ImageButton* transistorButton = new ImageButton(width / 2 + 8, height - 96, 64, 64, "../resources/images/transistor.png");
+    ImageButton* lightButton = new ImageButton(width / 2 + 88, height - 96, 64, 64, "../resources/images/light.png");
 
     renderer->addGuiObject(cursorButton);
+    renderer->addGuiObject(wireButton);
     renderer->addGuiObject(transistorButton);
     renderer->addGuiObject(lightButton);
 
     renderer->addCircuitObject(new Source({ 0, 0 }));
 
     Object* lastHover = nullptr;
+
+    bool placing = false;
+
+    SDL_FPoint lastPlaced;
 
     bool running = true;
 
@@ -111,6 +117,18 @@ int main(int argc, char** argv)
                             Utils::snapToGrid(point);
 
                             newObject->setPosition(point);
+
+                            if (placing && (point.x != lastPlaced.x || point.y != lastPlaced.y) && !renderer->findCircuitObject(point))
+                            {
+                                renderer->removeTemporaryObject(newObject);
+                                renderer->addCircuitObject(newObject);
+
+                                newObject = newObject->clone();
+
+                                renderer->addTemporaryObject(newObject);
+
+                                lastPlaced = point;
+                            }
                         }
                     }
 
@@ -124,61 +142,68 @@ int main(int argc, char** argv)
                 case SDL_MOUSEBUTTONDOWN:
                     if (event.button.button == SDL_BUTTON_LEFT)
                     {
+                        SDL_FPoint point = { (float)event.button.x, (float)event.button.y };
+
+                        renderer->getCamera()->inverseTransformPoint(point);
+
+                        Utils::snapToGrid(point);
+
                         if (lastHover)
                         {
-                            if (lastHover == cursorButton && newObject)
+                            if (newObject)
                             {
-                                renderer->removeCircuitObject(newObject);
+                                renderer->removeTemporaryObject(newObject);
 
                                 newObject = nullptr;
                             }
 
+                            if (lastHover == wireButton)
+                            {
+                                newObject = new Wire(point);
+
+                                renderer->addTemporaryObject(newObject);
+                            }
+
                             else if (lastHover == transistorButton)
                             {
-                                if (newObject)
-                                {
-                                    renderer->removeCircuitObject(newObject);
-                                }
-
-                                SDL_FPoint point = { (float)event.button.x, (float)event.button.y };
-
-                                renderer->getCamera()->inverseTransformPoint(point);
-
-                                Utils::snapToGrid(point);
-
                                 newObject = new Transistor(point);
 
-                                renderer->addCircuitObject(newObject);
+                                renderer->addTemporaryObject(newObject);
                             }
 
                             else if (lastHover == lightButton)
                             {
-                                if (newObject)
-                                {
-                                    renderer->removeCircuitObject(newObject);
-                                }
-
-                                SDL_FPoint point = { (float)event.button.x, (float)event.button.y };
-
-                                renderer->getCamera()->inverseTransformPoint(point);
-
-                                Utils::snapToGrid(point);
-
                                 newObject = new Light(point);
 
-                                renderer->addCircuitObject(newObject);
+                                renderer->addTemporaryObject(newObject);
                             }
                         }
 
                         else if (newObject)
                         {
-                            newObject = newObject->clone();
+                            if (!renderer->findCircuitObject(point))
+                            {
+                                renderer->removeTemporaryObject(newObject);
+                                renderer->addCircuitObject(newObject);
 
-                            renderer->addCircuitObject(newObject);
+                                newObject = newObject->clone();
+
+                                renderer->addTemporaryObject(newObject);
+                            }
+
+                            lastPlaced = point;
+
+                            placing = true;
                         }
                     }
 
                     break;
+
+                case SDL_MOUSEBUTTONUP:
+                    if (event.button.button == SDL_BUTTON_LEFT)
+                    {
+                        placing = false;
+                    }
 
                 case SDL_KEYDOWN:
                     if (!event.key.repeat)
