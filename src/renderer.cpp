@@ -75,33 +75,30 @@ void Renderer::addCircuitObject(CircuitObject* object)
 {
     object->init(renderer);
 
-    if (dynamic_cast<Wire*>(object))
+    const SDL_FPoint point = object->getPosition();
+
+    if (CircuitObject* other = findCircuitObject({ point.x, point.y - Utils::gridSize }))
     {
-        const SDL_FPoint point = object->getPosition();
+        object->setNeighbor(0, other);
+        other->setNeighbor(2, object);
+    }
 
-        if (CircuitObject* other = findCircuitObject({ point.x, point.y - Utils::gridSize }))
-        {
-            object->setNeighbor(0, other);
-            other->setNeighbor(2, object);
-        }
+    if (CircuitObject* other = findCircuitObject({ point.x + Utils::gridSize, point.y }))
+    {
+        object->setNeighbor(1, other);
+        other->setNeighbor(3, object);
+    }
 
-        if (CircuitObject* other = findCircuitObject({ point.x + Utils::gridSize, point.y }))
-        {
-            object->setNeighbor(1, other);
-            other->setNeighbor(3, object);
-        }
+    if (CircuitObject* other = findCircuitObject({ point.x, point.y + Utils::gridSize }))
+    {
+        object->setNeighbor(2, other);
+        other->setNeighbor(0, object);
+    }
 
-        if (CircuitObject* other = findCircuitObject({ point.x, point.y + Utils::gridSize }))
-        {
-            object->setNeighbor(2, other);
-            other->setNeighbor(0, object);
-        }
-
-        if (CircuitObject* other = findCircuitObject({ point.x - Utils::gridSize, point.y }))
-        {
-            object->setNeighbor(3, other);
-            other->setNeighbor(1, object);
-        }
+    if (CircuitObject* other = findCircuitObject({ point.x - Utils::gridSize, point.y }))
+    {
+        object->setNeighbor(3, other);
+        other->setNeighbor(1, object);
     }
 
     circuitObjects->add(object);

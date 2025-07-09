@@ -39,7 +39,10 @@ void CircuitObject::rotate()
 
 void CircuitObject::setNeighbor(const unsigned int index, CircuitObject* object)
 {
-    neighbors[index] = object;
+    if (hasConnection(index) && object->hasConnection((index + 2) % 4))
+    {
+        neighbors[index] = object;
+    }
 }
 
 Source::Source(const SDL_FPoint& position) :
@@ -64,6 +67,11 @@ void Source::render(SDL_Renderer* renderer, const Camera* camera) const
 CircuitObject* Source::clone() const
 {
     return new Source(position, rotation);
+}
+
+bool Source::hasConnection(const unsigned int index) const
+{
+    return true;
 }
 
 Wire::Wire(const SDL_FPoint& position) :
@@ -120,6 +128,11 @@ CircuitObject* Wire::clone() const
     return new Wire(position);
 }
 
+bool Wire::hasConnection(const unsigned int index) const
+{
+    return true;
+}
+
 Transistor::Transistor(const SDL_FPoint& position) :
     CircuitObject(position) {}
 
@@ -171,6 +184,11 @@ CircuitObject* Transistor::clone() const
     return new Transistor(position, rotation);
 }
 
+bool Transistor::hasConnection(const unsigned int index) const
+{
+    return index != (rotation + 2) % 4;
+}
+
 Light::Light(const SDL_FPoint& position) :
     CircuitObject(position) {}
 
@@ -216,4 +234,9 @@ void Light::render(SDL_Renderer* renderer, const Camera* camera) const
 CircuitObject* Light::clone() const
 {
     return new Light(position, rotation);
+}
+
+bool Light::hasConnection(const unsigned int index) const
+{
+    return index == (rotation + 2) % 4;
 }

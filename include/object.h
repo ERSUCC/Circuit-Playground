@@ -45,6 +45,8 @@ public:
 
     void setNeighbor(const unsigned int index, CircuitObject* object);
 
+    virtual bool hasConnection(const unsigned int index) const = 0;
+
 protected:
     unsigned int rotation;
 
@@ -63,6 +65,8 @@ public:
 
     CircuitObject* clone() const override;
 
+    bool hasConnection(const unsigned int index) const override;
+
 };
 
 class Wire : public CircuitObject
@@ -74,6 +78,8 @@ public:
     void render(SDL_Renderer* renderer, const Camera* camera) const override;
 
     CircuitObject* clone() const override;
+
+    bool hasConnection(const unsigned int index) const override;
 
 };
 
@@ -88,6 +94,8 @@ public:
 
     CircuitObject* clone() const override;
 
+    bool hasConnection(const unsigned int index) const override;
+
 };
 
 class Light : public CircuitObject
@@ -100,5 +108,7 @@ public:
     void render(SDL_Renderer* renderer, const Camera* camera) const override;
 
     CircuitObject* clone() const override;
+
+    bool hasConnection(const unsigned int index) const override;
 
 };
