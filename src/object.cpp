@@ -39,10 +39,7 @@ void CircuitObject::rotate()
 
 void CircuitObject::setNeighbor(const unsigned int index, CircuitObject* object)
 {
-    if (hasConnection(index) && object->hasConnection((index + 2) % 4))
-    {
-        neighbors[index] = object;
-    }
+    neighbors[index] = object;
 }
 
 Source::Source(const SDL_FPoint& position) :
@@ -86,7 +83,7 @@ void Wire::render(SDL_Renderer* renderer, const Camera* camera) const
     SDL_SetRenderDrawColor(renderer, 128, 128, 255, 255);
     SDL_RenderFillRectF(renderer, &center);
 
-    if (neighbors[0])
+    if (neighbors[0] && neighbors[0]->hasConnection(2))
     {
         SDL_FRect top = { position.x + Utils::gridSize / 2 - 4, position.y, 8, Utils::gridSize / 2 };
 
@@ -95,7 +92,7 @@ void Wire::render(SDL_Renderer* renderer, const Camera* camera) const
         SDL_RenderFillRectF(renderer, &top);
     }
 
-    if (neighbors[1])
+    if (neighbors[1] && neighbors[1]->hasConnection(3))
     {
         SDL_FRect right = { position.x + Utils::gridSize / 2, position.y + Utils::gridSize / 2 - 4, Utils::gridSize / 2, 8 };
 
@@ -104,7 +101,7 @@ void Wire::render(SDL_Renderer* renderer, const Camera* camera) const
         SDL_RenderFillRectF(renderer, &right);
     }
 
-    if (neighbors[2])
+    if (neighbors[2] && neighbors[2]->hasConnection(0))
     {
         SDL_FRect bottom = { position.x + Utils::gridSize / 2 - 4, position.y + Utils::gridSize / 2, 8, Utils::gridSize / 2 };
 
@@ -113,7 +110,7 @@ void Wire::render(SDL_Renderer* renderer, const Camera* camera) const
         SDL_RenderFillRectF(renderer, &bottom);
     }
 
-    if (neighbors[3])
+    if (neighbors[3] && neighbors[3]->hasConnection(1))
     {
         SDL_FRect left = { position.x, position.y + Utils::gridSize / 2 - 4, Utils::gridSize / 2, 8 };
 
